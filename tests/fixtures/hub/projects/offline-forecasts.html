@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Offline Forecasts</title>
+<style>
+:root{--bg:#fbfaf7;--fg:#1d1d1b;--muted:#6b6a65;--card:#fff;--line:#e4e1da;--accent:#2f6fde}
+@media (prefers-color-scheme:dark){:root{--bg:#141413;--fg:#ecebe6;--muted:#a3a19a;--card:#1e1e1c;--line:#33322f;--accent:#7aa5f0}}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 -apple-system,system-ui,sans-serif}
+main{max-width:720px;margin:0 auto;padding:40px 16px}
+h1{font-size:28px;margin:0 0 4px}.sub{color:var(--muted);margin:0 0 32px}
+.task{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:12px 0}
+.task b{color:var(--accent)}.notice{color:var(--muted);margin:6px 0 0}
+</style></head><body><main>
+<h1>Offline Forecasts</h1>
+<p class="sub">Why: with no signal the app shows a blank screen. The last forecast would be enough.</p>
+<div class="task"><b>PW-1</b> Show the last forecast when offline
+<p class="notice">What the user will notice: the app opens on the last forecast, marked with its age.</p></div>
+<div class="task"><b>PW-2</b> Refresh the cache in the background
+<p class="notice">What the user will notice: the morning forecast is from the last hour.</p></div>
+<div class="task"><b>PW-3</b> Say the age in words
+<p class="notice">What the user will notice: "Updated this morning" instead of "Updated 3 h ago".</p></div>
+</main></body></html>

@@ -1,0 +1,30 @@
+{
+  "name": "Pocket Weather",
+  "prefix": "PW",
+  "repos": [],
+  "dates": "metadata",
+  "kinds": [
+    "Bug",
+    "Feature",
+    "Improvement",
+    "Task"
+  ],
+  "labels": {
+    "area": [
+      "Forecast",
+      "Offline",
+      "Radar",
+      "Widgets",
+      "Alerts"
+    ],
+    "platform": [
+      "iOS",
+      "watchOS"
+    ],
+    "focus": [
+      "Performance",
+      "Accessibility",
+      "Copy"
+    ]
+  }
+}

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Issues</title>
+<script>try{const t=localStorage.getItem('issue-hub-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t}catch{}</script>
+<link rel="stylesheet" href="viewer.css">
+<script src="viewer.js" defer></script>
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="side-head">
+      <button class="hub-switch" id="hub-switch" disabled aria-label="Switch hub"><span class="hub-mark" id="hub-mark"></span><strong class="hub-name" id="hub-name">Issues</strong><svg class="chev" viewBox="0 0 12 12"><path d="m3 4.5 3 3 3-3"/></svg></button>
+      <button class="icon-btn" id="palette-open" title="Search and commands (⌘K)" aria-label="Search and commands"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg></button>
+    </div>
+    <nav id="nav" aria-label="Views"></nav>
+    <div class="side-foot">
+      <span id="freshness" class="muted"></span>
+      <button class="link-btn" id="help-open" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts"><kbd>?</kbd></button>
+      <button class="icon-btn" id="theme-toggle" title="Switch theme" aria-label="Switch theme"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5v11a5.5 5.5 0 0 0 0-11z" class="fill"/></svg></button>
+    </div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+  <main class="main" id="main">
+    <header class="top">
+      <button class="icon-btn menu-btn" id="menu-btn" aria-label="Menu"><svg viewBox="0 0 16 16"><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/></svg></button>
+      <h1 id="view-title">Issues</h1>
+      <span class="count" id="view-count"></span>
+      <div class="search">
+        <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>
+        <input id="search" type="search" placeholder="Filter by text" autocomplete="off" spellcheck="false" aria-label="Filter by text">
+        <kbd>/</kbd>
+      </div>
+      <div class="seg" role="group" aria-label="Layout">
+        <button id="layout-list" title="List (b)">List</button>
+        <button id="layout-board" title="Board (b)">Board</button>
+      </div>
+      <button class="btn" id="display-btn" title="Display options">Display</button>
+    </header>
+    <div class="filterbar" id="filterbar">
+      <div class="chips" id="chips"></div>
+      <button class="btn ghost" id="filter-btn" title="Filter (f)"><svg viewBox="0 0 16 16"><path d="M2.5 4h11M4.5 8h7M6.5 12h3"/></svg>Filter</button>
+    </div>
+    <section class="project-head" id="project-head" hidden></section>
+    <div class="content" id="content" tabindex="-1"></div>
+  </main>
+  <aside class="peek" id="peek" hidden aria-label="Issue"></aside>
+</div>
+
+<div class="layer" id="palette" hidden>
+  <div class="palette" role="dialog" aria-label="Search and commands">
+    <input id="palette-input" placeholder="Type a command or search issues…" autocomplete="off" spellcheck="false">
+    <div class="palette-list" id="palette-list" role="listbox"></div>
+    <div class="palette-foot"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>↵</kbd> open</span><span><kbd>esc</kbd> close</span></div>
+  </div>
+</div>
+
+<div class="popover" id="popover" hidden></div>
+
+<div class="layer viewer-layer" id="viewer" hidden>
+  <div class="viewer" role="dialog" aria-label="Document">
+    <header><strong id="viewer-title"></strong><a id="viewer-tab" target="_blank" rel="noreferrer" class="btn ghost">Open in new tab</a><button class="icon-btn" id="viewer-close" aria-label="Close"><svg viewBox="0 0 16 16"><path d="m4 4 8 8M12 4l-8 8"/></svg></button></header>
+    <div class="viewer-body" id="viewer-body"></div>
+  </div>
+</div>
+
+<div class="layer" id="help" hidden>
+  <div class="help" role="dialog" aria-label="Keyboard shortcuts">
+    <h2>Keyboard shortcuts</h2>
+    <dl>
+      <dt><kbd>⌘</kbd><kbd>K</kbd></dt><dd>Search and commands</dd>
+      <dt><kbd>/</kbd></dt><dd>Filter by text</dd>
+      <dt><kbd>f</kbd></dt><dd>Add a filter</dd>
+      <dt><kbd>j</kbd> <kbd>k</kbd></dt><dd>Move down and up</dd>
+      <dt><kbd>↵</kbd></dt><dd>Open the issue</dd>
+      <dt><kbd>esc</kbd></dt><dd>Close</dd>
+      <dt><kbd>b</kbd></dt><dd>Switch list and board</dd>
+      <dt><kbd>g</kbd> then <kbd>a</kbd> <kbd>b</kbd> <kbd>l</kbd> <kbd>d</kbd> <kbd>p</kbd></dt><dd>Active, Backlog, All, Done, Projects</dd>
+      <dt><kbd>g</kbd> then <kbd>h</kbd></dt><dd>Switch hub</dd>
+      <dt><kbd>p</kbd></dt><dd>Open the issue's project plan</dd>
+      <dt><kbd>c</kbd></dt><dd>Copy a link to the issue</dd>
+      <dt><kbd>x</kbd></dt><dd>Clear filters</dd>
+    </dl>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+</body>
+</html>

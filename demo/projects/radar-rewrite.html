@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Radar Rewrite</title><style>:root{--bg:#f3f5f2;--surface:#fff;--ink:#1f2a24;--muted:#5d6b62;--line:#d9e0db;--accent:#2f6b4f;--soft:rgba(47,107,79,.1);--amber:#a86b00}
+@media (prefers-color-scheme:dark){:root{--bg:#121714;--surface:#1a211d;--ink:#e3eae5;--muted:#9eaba3;--line:#2c3631;--accent:#8fd0ae;--soft:rgba(143,208,174,.12);--amber:#f0b45a}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:44px 20px 80px;display:grid;gap:40px}
+h1{font:600 clamp(2rem,5vw,2.7rem)/1.1 Georgia,"New York",serif;margin:0}h2{font:600 1.45rem/1.2 Georgia,"New York",serif;margin:0 0 12px}
+.eyebrow{font-size:.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.lede{font-size:1.1rem;color:var(--muted);max-width:62ch;margin:10px 0 0}
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.pill{font-size:.78rem;font-weight:600;padding:3px 11px;border-radius:99px;background:var(--soft);color:var(--accent)}
+.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.step{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.step b{display:block;margin-bottom:4px}.step span{color:var(--muted);font-size:.92rem}
+.tasks{display:grid;gap:10px}.task{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 18px;display:grid;grid-template-columns:72px 1fr;gap:4px 14px}
+.task .id{font:600 .9rem ui-monospace,Menlo,monospace;color:var(--accent);padding-top:2px}.task h3{margin:0;font-size:1rem}.task p{margin:2px 0 0;color:var(--muted);font-size:.93rem}
+.task .st{font-size:.75rem;font-weight:600;color:var(--amber)}
+@media(max-width:640px){.flow{grid-template-columns:1fr}.task{grid-template-columns:1fr}}</style></head>
+<body><div class="wrap">
+<header><span class="eyebrow">Project · Pocket Weather 2.6</span><h1>Radar Rewrite</h1><p class="lede">A radar that pans at 120 Hz, loops the last two hours of rain smoothly, and shows where the rain is heading.</p><div class="pills"><span class="pill">In Progress</span><span class="pill">PW-10 to PW-16</span><span class="pill">Target 1 December</span></div></header>
+<section><h2>How it works</h2><div class="flow"><div class="step"><b>GPU tiles</b><span>Decode off the main thread, composite in Metal.</span></div><div class="step"><b>Smooth loop</b><span>Cross-fade frames, preload the next.</span></div><div class="step"><b>Next hour</b><span>Motion arrows from the provider's nowcast.</span></div></div></section>
+<section><h2>Issues, in build order</h2><div class="tasks"><div class="task"><span class="id">PW-10</span><div><h3>Draw radar tiles on the GPU</h3><p>Pan holds 118 to 120 fps on iPhone 15 Pro.</p><span class="st">In progress</span></div></div><div class="task"><span class="id">PW-13</span><div><h3>Color-blind friendly scale</h3><p>All six steps distinct in the color filters.</p><span class="st">In review</span></div></div><div class="task"><span class="id">PW-11</span><div><h3>Animate the last two hours</h3><p>Waits for PW-10.</p><span class="st">Todo</span></div></div><div class="task"><span class="id">PW-12</span><div><h3>Where rain is heading</h3><p>Waits for PW-10.</p><span class="st">Backlog</span></div></div></div></section>
+</div></body></html>

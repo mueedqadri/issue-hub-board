@@ -1,0 +1,877 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Issue hub</title>
+<style>
+  :root {
+    --ground: #F7F8F9;
+    --raised: #FFFFFF;
+    --ink: #1B1D21;
+    --ink-soft: #4A5257;
+    --ink-faint: #6B7478;
+    --rule: #DCE1E3;
+    --rule-soft: #E9EDEE;
+    --running: #0E7C86;
+    --waiting: #9A6B18;
+    --failed: #A3342A;
+    --done: #2E7D5B;
+    --running-wash: #E4F1F2;
+    --waiting-wash: #F6EEDD;
+    --failed-wash: #F7E7E4;
+    --done-wash: #E3F0EA;
+    --shadow: 0 1px 2px rgba(27, 29, 33, .06), 0 4px 12px rgba(27, 29, 33, .05);
+    --shadow-lift: 0 2px 6px rgba(27, 29, 33, .10), 0 14px 36px rgba(27, 29, 33, .12);
+
+    --serif: ui-serif, "New York", Iowan Old Style, Georgia, serif;
+    --sans: system-ui, -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+    --measure: 68ch;
+
+    /* Project chips: hue comes per-chip from --h, these set the theme. */
+    --chip-s: 52%;
+    --chip-bg: 91%;
+    --chip-ink: 30%;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #14181A; --raised: #1B2124; --ink: #E6EAEB; --ink-soft: #B3BCC0;
+      --ink-faint: #8A959A; --rule: #2C3438; --rule-soft: #232A2D;
+      --running: #3FB3BD; --waiting: #D4A24A; --failed: #E08074; --done: #5FBF92;
+      --running-wash: #122C2F; --waiting-wash: #2C2415; --failed-wash: #2E1D1A; --done-wash: #14291F;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 12px rgba(0,0,0,.3);
+      --shadow-lift: 0 2px 6px rgba(0,0,0,.5), 0 14px 36px rgba(0,0,0,.45);
+      --chip-s: 42%; --chip-bg: 21%; --chip-ink: 76%;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  /* #board and .grid set display, which would otherwise beat the UA's [hidden] rule. */
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font: 15px/1.5 var(--sans);
+    -webkit-font-smoothing: antialiased;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  button, select, input, textarea { font: inherit; color: inherit; }
+  a { color: var(--running); text-decoration-thickness: .06em; text-underline-offset: .18em; }
+
+  /* ---------------------------------------------------------- top bar */
+  header {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    padding: 10px 18px; background: var(--raised);
+    border-bottom: 1px solid var(--rule); flex: 0 0 auto;
+  }
+  .brand { font-weight: 620; letter-spacing: -.01em; margin-right: 2px; }
+  .brand span { color: var(--ink-faint); font-weight: 400; margin-left: 8px; font-variant-numeric: tabular-nums; }
+
+  .tabs { display: flex; gap: 2px; background: var(--ground); padding: 3px; border-radius: 9px; }
+  .tabs button {
+    border: 0; background: none; padding: 5px 12px; border-radius: 6px;
+    color: var(--ink-soft); cursor: pointer;
+  }
+  .tabs button[aria-selected="true"] { background: var(--raised); color: var(--ink); box-shadow: var(--shadow); }
+
+  .filters { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; align-items: center; }
+  input[type="search"], select {
+    background: var(--ground); border: 1px solid var(--rule); border-radius: 8px;
+    padding: 6px 10px; min-width: 0;
+  }
+  input[type="search"] { width: 230px; }
+  select { max-width: 220px; }
+  .ghost {
+    background: none; border: 1px solid var(--rule); border-radius: 8px;
+    padding: 6px 10px; cursor: pointer; color: var(--ink-soft);
+  }
+  .ghost:hover { color: var(--ink); border-color: var(--ink-faint); }
+
+  /* ---------------------------------------------------------- multi-select picker */
+  .picker { position: relative; }
+  .pbtn {
+    display: flex; align-items: center; gap: 7px; max-width: 260px;
+    background: var(--ground); border: 1px solid var(--rule); border-radius: 8px;
+    padding: 6px 10px; cursor: pointer; color: var(--ink);
+  }
+  .pbtn:hover { border-color: var(--ink-faint); }
+  .pbtn[aria-expanded="true"] { border-color: var(--running); }
+  .pbtn.on { border-color: var(--running); color: var(--running); background: var(--running-wash); }
+  .pbtn .ptext { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pbtn .pn {
+    font-size: 11px; font-variant-numeric: tabular-nums; background: var(--running);
+    color: #fff; border-radius: 20px; padding: 1px 6px; flex: 0 0 auto;
+  }
+  .pbtn .pcaret { color: var(--ink-faint); flex: 0 0 auto; font-size: 10px; }
+
+  .ppop {
+    position: absolute; top: calc(100% + 6px); right: 0; z-index: 30; width: 290px;
+    background: var(--raised); border: 1px solid var(--rule); border-radius: 11px;
+    box-shadow: var(--shadow-lift); padding: 8px; display: flex; flex-direction: column; gap: 7px;
+  }
+  .ppop input { width: 100%; background: var(--ground); border: 1px solid var(--rule); border-radius: 7px; padding: 6px 9px; }
+  .popts { max-height: 290px; overflow-y: auto; display: flex; flex-direction: column; gap: 1px; }
+  .popt {
+    display: flex; align-items: center; gap: 8px; padding: 5px 7px; border-radius: 6px;
+    cursor: pointer; font-size: 13.5px; line-height: 1.3;
+  }
+  .popt:hover, .popt.active { background: var(--ground); }
+  .popt input { width: auto; flex: 0 0 auto; margin: 0; accent-color: var(--running); }
+  .popt .pname { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .popt .pcount { color: var(--ink-faint); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+  .pfoot {
+    display: flex; align-items: center; gap: 8px; padding-top: 6px;
+    border-top: 1px solid var(--rule-soft); font-size: 12px; color: var(--ink-faint);
+  }
+  .pfoot button {
+    background: none; border: 0; padding: 2px 4px; cursor: pointer;
+    color: var(--running); font-size: 12px;
+  }
+  .pfoot .grow { margin-left: auto; }
+
+  main { flex: 1 1 auto; min-height: 0; overflow: auto; }
+
+  /* ---------------------------------------------------------- board */
+  #board { display: flex; gap: 14px; padding: 16px; height: 100%; align-items: flex-start; }
+  .col {
+    flex: 0 0 300px; display: flex; flex-direction: column; max-height: 100%;
+    background: var(--rule-soft); border-radius: 12px; border: 1px solid transparent;
+  }
+  .col.collapsed { flex-basis: 54px; }
+  .col.over { border-color: var(--running); background: var(--running-wash); }
+  .col > h2 {
+    margin: 0; font-size: 12px; font-weight: 620; letter-spacing: .05em; text-transform: uppercase;
+    color: var(--ink-soft); padding: 11px 12px; display: flex; gap: 8px; align-items: center;
+    cursor: pointer; user-select: none; flex: 0 0 auto;
+  }
+  .col.collapsed > h2 {
+    writing-mode: vertical-rl; padding: 12px 0; justify-content: flex-start; height: 100%;
+  }
+  .col > h2 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-faint); flex: 0 0 auto; }
+  .col > h2 .n { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--ink-faint); }
+  .col.collapsed > h2 .n { margin-left: 0; }
+  .col[data-status="In Progress"] .dot { background: var(--running); }
+  .col[data-status="In Review"] .dot { background: var(--waiting); }
+  .col[data-status="Done"] .dot { background: var(--done); }
+  .col[data-status="Canceled"] .dot { background: var(--failed); }
+  .col[data-status="Todo"] .dot { background: var(--ink-soft); }
+  .stack { overflow-y: auto; padding: 0 8px 10px; display: flex; flex-direction: column; gap: 8px; }
+  .col.collapsed .stack { display: none; }
+
+  .card {
+    background: var(--raised); border: 1px solid var(--rule); border-radius: 10px;
+    padding: 10px 11px; cursor: pointer; box-shadow: var(--shadow);
+    transition: box-shadow .12s ease, transform .12s ease, border-color .12s ease;
+  }
+  .card:hover { box-shadow: var(--shadow-lift); border-color: var(--ink-faint); }
+  .card:active { cursor: grabbing; }
+  .card.dragging { opacity: .4; }
+  .card .top { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+  .card .id { font: 600 11.5px/1 var(--mono); color: var(--ink-faint); letter-spacing: .01em; }
+  .card .pri { width: 6px; height: 6px; border-radius: 50%; flex: 0 0 auto; }
+  .pri.p1 { background: var(--failed); } .pri.p2 { background: var(--waiting); }
+  .pri.p3 { background: var(--ink-soft); } .pri.p4 { background: var(--rule); }
+  .pri.p0 { background: none; box-shadow: inset 0 0 0 1px var(--rule); }
+  .card .cc { margin-left: auto; font-size: 11px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  .card .t { font-size: 13.5px; line-height: 1.35; }
+  .card .meta { margin-top: 7px; display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
+  .chip {
+    font-size: 10.5px; padding: 1.5px 6px; border-radius: 20px;
+    background: var(--ground); border: 1px solid var(--rule); color: var(--ink-faint);
+  }
+  .chip.proj, .chip.kind {
+    border-color: transparent;
+    background: hsl(var(--h, 187) var(--chip-s) var(--chip-bg));
+    color: hsl(var(--h, 187) var(--chip-s) var(--chip-ink));
+  }
+  /* Same hue on the Projects grid, so a colour means one project everywhere. */
+  .pcard h3 ::before, .pdot {
+    content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+    background: hsl(var(--h, 187) var(--chip-s) calc(var(--chip-ink) + 14%));
+    margin-right: 8px; flex: 0 0 auto;
+  }
+  .pcard h3 { display: flex; align-items: baseline; gap: 0; }
+
+  /* ---------------------------------------------------------- projects / docs */
+  .grid { padding: 18px; display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+  .pcard {
+    background: var(--raised); border: 1px solid var(--rule); border-radius: 12px;
+    padding: 15px 16px; cursor: pointer; box-shadow: var(--shadow);
+  }
+  .pcard:hover { box-shadow: var(--shadow-lift); }
+  .pcard h3 { margin: 0 0 3px; font-size: 15.5px; letter-spacing: -.01em; }
+  .pcard .sub { color: var(--ink-faint); font-size: 12.5px; display: flex; gap: 8px; align-items: center; }
+  .bar { display: flex; height: 6px; border-radius: 4px; overflow: hidden; margin-top: 12px; background: var(--rule-soft); }
+  .bar i { display: block; }
+  .bar i[data-s="Backlog"] { background: var(--rule); }
+  .bar i[data-s="Todo"] { background: var(--ink-faint); }
+  .bar i[data-s="In Progress"] { background: var(--running); }
+  .bar i[data-s="In Review"] { background: var(--waiting); }
+  .bar i[data-s="Done"] { background: var(--done); }
+  .bar i[data-s="Canceled"] { background: var(--failed); }
+  .legend { margin-top: 9px; display: flex; gap: 9px; flex-wrap: wrap; font-size: 11.5px; color: var(--ink-faint); }
+
+  /* ---------------------------------------------------------- drawer */
+  #scrim {
+    position: fixed; inset: 0; background: rgba(20, 24, 26, .3);
+    opacity: 0; pointer-events: none; transition: opacity .18s ease; z-index: 40;
+  }
+  body.open #scrim { opacity: 1; pointer-events: auto; }
+  #drawer {
+    position: fixed; top: 0; right: 0; height: 100%; width: min(760px, 94vw);
+    background: var(--raised); border-left: 1px solid var(--rule); z-index: 50;
+    transform: translateX(100%); transition: transform .2s cubic-bezier(.32,.72,0,1);
+    display: flex; flex-direction: column;
+  }
+  body.open #drawer { transform: none; box-shadow: var(--shadow-lift); }
+  @media (prefers-reduced-motion: reduce) { #drawer, #scrim { transition: none; } }
+
+  #drawer .bar-top {
+    display: flex; align-items: center; gap: 10px; padding: 12px 18px;
+    border-bottom: 1px solid var(--rule); flex: 0 0 auto;
+  }
+  #drawer .bar-top .id { font: 600 12.5px/1 var(--mono); color: var(--ink-faint); }
+  #drawer .bar-top .spacer { margin-left: auto; }
+  #dbody { overflow: auto; padding: 20px 26px 60px; }
+  #dbody h1 { font: 600 24px/1.25 var(--sans); letter-spacing: -.02em; margin: 0 0 14px; max-width: var(--measure); }
+
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; padding-bottom: 16px; border-bottom: 1px solid var(--rule-soft); }
+  .controls label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--ink-faint); }
+
+  .prose { font: 16px/1.62 var(--serif); max-width: var(--measure); padding-top: 18px; }
+  .prose h1, .prose h2, .prose h3, .prose h4 { font-family: var(--sans); letter-spacing: -.01em; line-height: 1.3; }
+  .prose h1 { font-size: 19px; margin: 30px 0 10px; }
+  .prose h2 { font-size: 17px; margin: 28px 0 10px; padding-bottom: 5px; border-bottom: 1px solid var(--rule-soft); }
+  .prose h3 { font-size: 15px; margin: 22px 0 8px; }
+  .prose h4 { font-size: 14px; margin: 18px 0 6px; color: var(--ink-soft); }
+  .prose p, .prose ul, .prose ol { margin: 0 0 13px; }
+  .prose li { margin-bottom: 5px; }
+  .prose li > ul, .prose li > ol { margin-top: 5px; }
+  .prose code { font: 13px/1.4 var(--mono); background: var(--ground); border: 1px solid var(--rule-soft); border-radius: 5px; padding: .1em .35em; }
+  .prose pre {
+    background: var(--ground); border: 1px solid var(--rule); border-radius: 9px;
+    padding: 12px 14px; overflow-x: auto; max-width: 100%;
+  }
+  .prose pre code { border: 0; background: none; padding: 0; font-size: 12.5px; line-height: 1.5; }
+  .prose blockquote {
+    margin: 0 0 14px; padding: 2px 0 2px 16px; border-left: 2px solid var(--rule);
+    color: var(--ink-soft);
+  }
+  .prose table { border-collapse: collapse; width: 100%; font: 13.5px/1.5 var(--sans); margin: 0 0 16px; }
+  .prose th, .prose td { border: 1px solid var(--rule); padding: 7px 10px; text-align: left; vertical-align: top; }
+  .prose th { background: var(--ground); font-weight: 600; }
+  .prose hr { border: 0; border-top: 1px solid var(--rule); margin: 22px 0; }
+  .prose img { max-width: 100%; }
+  .table-wrap { overflow-x: auto; }
+
+  .comment-box { max-width: var(--measure); margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--rule-soft); }
+  .comment-box textarea {
+    width: 100%; min-height: 76px; resize: vertical; background: var(--ground);
+    border: 1px solid var(--rule); border-radius: 9px; padding: 10px 12px; font: 14px/1.5 var(--sans);
+  }
+  .primary {
+    margin-top: 9px; background: var(--running); color: #fff; border: 0;
+    border-radius: 8px; padding: 7px 15px; cursor: pointer; font-weight: 550;
+  }
+  .primary:disabled { opacity: .5; cursor: default; }
+
+  .ilist { display: flex; flex-direction: column; gap: 7px; max-width: var(--measure); margin-top: 8px; }
+  .irow {
+    display: flex; gap: 10px; align-items: baseline; padding: 8px 11px; cursor: pointer;
+    background: var(--ground); border: 1px solid var(--rule-soft); border-radius: 9px;
+  }
+  .irow:hover { border-color: var(--ink-faint); }
+  .irow .id { font: 600 11.5px/1 var(--mono); color: var(--ink-faint); flex: 0 0 auto; }
+  .irow .t { flex: 1 1 auto; font-size: 13.5px; }
+  .irow .st { font-size: 11px; color: var(--ink-faint); flex: 0 0 auto; }
+
+  /* ---------------------------------------------------------- misc */
+  #toast {
+    position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 18px);
+    background: var(--ink); color: var(--ground); padding: 9px 16px; border-radius: 9px;
+    font-size: 13.5px; opacity: 0; pointer-events: none; transition: all .18s ease; z-index: 60;
+    max-width: 70vw;
+  }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
+  #toast.bad { background: var(--failed); color: #fff; }
+  .empty { padding: 40px; color: var(--ink-faint); }
+  .hint { font-size: 12px; color: var(--ink-faint); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Issue hub <span id="count"></span></div>
+  <div class="tabs" role="tablist">
+    <button role="tab" data-view="board" aria-selected="true">Board</button>
+    <button role="tab" data-view="projects" aria-selected="false">Projects</button>
+    <button role="tab" data-view="docs" aria-selected="false">Documents</button>
+  </div>
+  <div class="filters">
+    <input type="search" id="q" placeholder="Search id, title, label…" autocomplete="off">
+    <div class="picker" id="fkind"></div>
+    <div class="picker" id="fproj"></div>
+    <div class="picker" id="flabel"></div>
+    <button class="ghost" id="clear">Clear</button>
+  </div>
+</header>
+
+<main>
+  <div id="board"></div>
+  <div id="projects" class="grid" hidden></div>
+  <div id="docs" class="grid" hidden></div>
+</main>
+
+<div id="scrim"></div>
+<aside id="drawer" aria-hidden="true">
+  <div class="bar-top">
+    <span class="id" id="dkind"></span>
+    <span class="spacer"></span>
+    <a class="ghost" id="dplan" hidden target="_blank" rel="noreferrer">Illustrated plan ↗</a>
+    <button class="ghost" id="dclose">Close</button>
+  </div>
+  <div id="dbody"></div>
+</aside>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+
+const STATE = { data: null, byId: new Map(), view: "board", collapsed: new Set(["Done", "Canceled"]) };
+const $ = (sel) => document.querySelector(sel);
+
+/* One hue per project, spread by the golden angle so neighbours never collide.
+   Keyed off the slug list sorted alphabetically, not by recency — a project
+   keeps its colour as issues are filed and the board reorders. */
+const HUE = {};
+function assignHues(projects) {
+  projects.map((p) => p.slug).sort().forEach((slug, i) => {
+    HUE[slug] = Math.round((i * 137.508) % 360);
+  });
+}
+const hueOf = (slug) => HUE[slug] ?? 187;
+
+function toast(message, bad) {
+  const el = $("#toast");
+  el.textContent = message;
+  el.className = "show" + (bad ? " bad" : "");
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.className = ""; }, bad ? 5200 : 2400);
+}
+
+async function api(path, options) {
+  const res = await fetch(path, options);
+  const payload = await res.json().catch(() => ({ error: res.statusText }));
+  if (!res.ok) throw new Error(payload.error || res.statusText);
+  return payload;
+}
+
+/* ------------------------------------------------------------- multi-select picker */
+
+const PICKERS = {};
+const NO_PROJECT = "\u0000none";
+
+/** A searchable multi-select. `options` is [{value, label, count}]. */
+function makePicker(mount, { allLabel, searchLabel, options, onChange }) {
+  const values = new Set();
+  mount.innerHTML =
+    `<button class="pbtn" aria-expanded="false" aria-haspopup="listbox">` +
+      `<span class="ptext"></span><span class="pn" hidden></span><span class="pcaret">&#9662;</span></button>` +
+    `<div class="ppop" hidden>` +
+      `<input type="search" placeholder="${esc(searchLabel)}" autocomplete="off">` +
+      `<div class="popts" role="listbox" aria-multiselectable="true"></div>` +
+      `<div class="pfoot"><button data-act="all">Select all</button>` +
+      `<button data-act="clear">Clear</button><span class="grow"></span></div>` +
+    `</div>`;
+
+  const btn = mount.querySelector(".pbtn");
+  const pop = mount.querySelector(".ppop");
+  const search = mount.querySelector(".ppop input");
+  const list = mount.querySelector(".popts");
+  const foot = mount.querySelector(".pfoot .grow");
+
+  function paint() {
+    const text = mount.querySelector(".ptext");
+    const badge = mount.querySelector(".pn");
+    const noun = allLabel.replace(/^All /, "");
+    if (!values.size) text.textContent = allLabel;
+    else if (values.size === 1) {
+      const only = options.find((o) => o.value === [...values][0]);
+      text.textContent = only ? only.label : allLabel;
+    } else {
+      text.textContent = `${values.size} ${noun}`;
+    }
+    badge.hidden = true;
+    btn.classList.toggle("on", values.size > 0);
+    foot.textContent = values.size ? `${values.size} selected` : "";
+    list.querySelectorAll(".popt").forEach((row) => {
+      const box = row.querySelector("input");
+      if (box) box.checked = values.has(row.dataset.value);
+    });
+  }
+
+  function renderOptions() {
+    const q = search.value.trim().toLowerCase();
+    const shown = options.filter((o) => !q || o.label.toLowerCase().includes(q));
+    list.innerHTML = shown.length
+      ? shown.map((o) =>
+          `<label class="popt" data-value="${esc(o.value)}" role="option">` +
+          `<input type="checkbox"${values.has(o.value) ? " checked" : ""}>` +
+          `<span class="pname">${esc(o.label)}</span>` +
+          (o.count == null ? "" : `<span class="pcount">${o.count}</span>`) +
+          `</label>`).join("")
+      : `<div class="popt" style="color:var(--ink-faint)">No match</div>`;
+    list.querySelectorAll(".popt[data-value]").forEach((row) => {
+      row.addEventListener("click", (ev) => { ev.preventDefault(); toggle(row.dataset.value); });
+    });
+  }
+
+  function toggle(value) {
+    if (value === undefined) return;
+    values.has(value) ? values.delete(value) : values.add(value);
+    paint();
+    onChange();
+  }
+
+  function open(state) {
+    pop.hidden = !state;
+    btn.setAttribute("aria-expanded", String(state));
+    if (state) { search.value = ""; renderOptions(); search.focus(); }
+  }
+
+  btn.addEventListener("click", () => open(pop.hidden));
+  search.addEventListener("input", renderOptions);
+  search.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter") { ev.preventDefault(); toggle(list.querySelector(".popt[data-value]")?.dataset.value); }
+    if (ev.key === "Escape") { ev.stopPropagation(); open(false); btn.focus(); }
+  });
+  mount.querySelectorAll(".pfoot button").forEach((b) =>
+    b.addEventListener("click", () => {
+      values.clear();
+      if (b.dataset.act === "all") {
+        const q = search.value.trim().toLowerCase();
+        options.filter((o) => !q || o.label.toLowerCase().includes(q)).forEach((o) => values.add(o.value));
+      }
+      renderOptions();
+      paint();
+      onChange();
+    }));
+  document.addEventListener("click", (ev) => { if (!mount.contains(ev.target)) open(false); });
+
+  paint();
+  return { values, clear() { values.clear(); paint(); } };
+}
+
+/* ------------------------------------------------------------- filters */
+
+function matches(issue) {
+  const q = $("#q").value.trim().toLowerCase();
+  const projects = PICKERS.project ? PICKERS.project.values : new Set();
+  const labels = PICKERS.label ? PICKERS.label.values : new Set();
+  const kinds = PICKERS.kind ? PICKERS.kind.values : new Set();
+  if (kinds.size && !kinds.has(issue.kind || NO_KIND)) return false;
+  if (projects.size && !projects.has(issue.projectSlug || NO_PROJECT)) return false;
+  if (labels.size && !issue.labels.some((l) => labels.has(l))) return false;
+  if (!q) return true;
+  const hay = [issue.id, issue.title, issue.kind || "", issue.projectName || "", issue.labels.join(" ")]
+    .join(" ").toLowerCase();
+  return hay.includes(q);
+}
+
+/* ------------------------------------------------------------- board */
+
+const KIND_HUES = { Bug: 4, Feature: 145, Improvement: 212, Task: 38 };
+const NO_KIND = "\u0000no-kind";
+
+function kindChip(kind) {
+  if (!kind) return "";
+  const hue = KIND_HUES[kind] ?? hueOf(kind);
+  return ` <span class="chip kind" style="--h:${hue}">${esc(kind)}</span>`;
+}
+
+function cardEl(issue) {
+  const el = document.createElement("article");
+  el.className = "card";
+  el.draggable = true;
+  el.dataset.id = issue.id;
+  const labels = issue.labels.slice(0, 3)
+    .map((l) => `<span class="chip">${esc(l)}</span>`).join("");
+  const more = issue.labels.length > 3 ? `<span class="chip">+${issue.labels.length - 3}</span>` : "";
+  const project = issue.projectName
+    ? `<span class="chip proj" style="--h:${hueOf(issue.projectSlug)}">${esc(issue.projectName)}</span>`
+    : "";
+  el.innerHTML =
+    `<div class="top"><span class="pri p${issue.priorityNum}" title="${esc(issue.priority)}"></span>` +
+    `<span class="id">${issue.id}</span>` + kindChip(issue.kind) +
+    (issue.commentCount ? `<span class="cc">${issue.commentCount} ✦</span>` : "") +
+    `</div><div class="t">${esc(issue.title)}</div>` +
+    (project || labels || more ? `<div class="meta">${project}${labels}${more}</div>` : "");
+  el.addEventListener("click", () => { location.hash = issue.id; });
+  el.addEventListener("dragstart", (ev) => {
+    ev.dataTransfer.setData("text/plain", issue.id);
+    ev.dataTransfer.effectAllowed = "move";
+    el.classList.add("dragging");
+  });
+  el.addEventListener("dragend", () => el.classList.remove("dragging"));
+  return el;
+}
+
+function renderBoard() {
+  const root = $("#board");
+  root.innerHTML = "";
+  const visible = STATE.data.issues.filter(matches);
+
+  for (const status of STATE.data.statuses) {
+    const collapsed = STATE.collapsed.has(status);
+    const items = visible.filter((i) => i.status === status);
+
+    const col = document.createElement("section");
+    col.className = "col" + (collapsed ? " collapsed" : "");
+    col.dataset.status = status;
+
+    const head = document.createElement("h2");
+    head.innerHTML = `<span class="dot"></span><span>${status}</span><span class="n">${items.length}</span>`;
+    head.title = collapsed ? "Click to expand" : "Click to collapse";
+    head.addEventListener("click", () => {
+      STATE.collapsed.has(status) ? STATE.collapsed.delete(status) : STATE.collapsed.add(status);
+      renderBoard();
+    });
+    col.appendChild(head);
+
+    const stack = document.createElement("div");
+    stack.className = "stack";
+    if (!collapsed) items.forEach((issue) => stack.appendChild(cardEl(issue)));
+    col.appendChild(stack);
+
+    col.addEventListener("dragover", (ev) => { ev.preventDefault(); col.classList.add("over"); });
+    col.addEventListener("dragleave", (ev) => {
+      if (!col.contains(ev.relatedTarget)) col.classList.remove("over");
+    });
+    col.addEventListener("drop", (ev) => {
+      ev.preventDefault();
+      col.classList.remove("over");
+      move(ev.dataTransfer.getData("text/plain"), status);
+    });
+
+    root.appendChild(col);
+  }
+}
+
+async function move(id, status) {
+  const issue = STATE.byId.get(id);
+  if (!issue || issue.status === status) return;
+  const previous = issue.status;
+  issue.status = status;            // optimistic
+  renderBoard();
+  try {
+    const updated = await api(`/api/issue/${id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status, mtime: issue.mtime }),
+    });
+    Object.assign(issue, updated);
+    STATE.byId.set(id, issue);
+    renderBoard();
+    toast(`${id} → ${status}${updated.readmeSynced ? " · README updated" : ""}`);
+  } catch (err) {
+    issue.status = previous;
+    renderBoard();
+    toast(err.message, true);
+  }
+}
+
+/* ------------------------------------------------------------- projects & docs */
+
+function renderProjects() {
+  const root = $("#projects");
+  root.innerHTML = "";
+  const q = $("#q").value.trim().toLowerCase();
+  const list = STATE.data.projects.filter((p) => !q || p.name.toLowerCase().includes(q));
+  if (!list.length) { root.innerHTML = '<p class="empty">No projects match.</p>'; return; }
+
+  for (const project of list) {
+    const el = document.createElement("article");
+    el.className = "pcard";
+    const total = project.total || 1;
+    const bar = STATE.data.statuses
+      .filter((s) => project.counts[s])
+      .map((s) => `<i data-s="${s}" style="width:${(project.counts[s] / total) * 100}%" title="${s}: ${project.counts[s]}"></i>`)
+      .join("");
+    const legend = STATE.data.statuses
+      .filter((s) => project.counts[s])
+      .map((s) => `${s} ${project.counts[s]}`).join(" · ");
+    el.style.setProperty("--h", hueOf(project.slug));
+    el.innerHTML =
+      `<h3><span class="pdot"></span>${esc(project.name)}</h3>` +
+      `<div class="sub">${esc(project.status)} · ${project.total} issue${project.total === 1 ? "" : "s"}` +
+      (project.hasPlan ? ' · <span style="color:var(--running)">plan ↗</span>' : "") + "</div>" +
+      `<div class="bar">${bar}</div>` +
+      `<div class="legend">${legend || "no issues"}</div>`;
+    el.addEventListener("click", () => { location.hash = `project/${project.slug}`; });
+    root.appendChild(el);
+  }
+}
+
+function renderDocs() {
+  const root = $("#docs");
+  root.innerHTML = "";
+  for (const doc of STATE.data.docs) {
+    const el = document.createElement("article");
+    el.className = "pcard";
+    el.innerHTML = `<h3>${esc(doc.name)}</h3><div class="sub">${esc(doc.slug)}.md</div>`;
+    el.addEventListener("click", () => { location.hash = `doc/${doc.slug}`; });
+    root.appendChild(el);
+  }
+  if (!STATE.data.docs.length) root.innerHTML = '<p class="empty">No documents.</p>';
+}
+
+/* ------------------------------------------------------------- drawer */
+
+function openDrawer() { document.body.classList.add("open"); $("#drawer").setAttribute("aria-hidden", "false"); }
+function closeDrawer() {
+  document.body.classList.remove("open");
+  $("#drawer").setAttribute("aria-hidden", "true");
+  $("#dplan").hidden = true;
+}
+
+function wrapTables(root) {
+  root.querySelectorAll("table").forEach((table) => {
+    if (table.parentElement.classList.contains("table-wrap")) return;
+    const wrap = document.createElement("div");
+    wrap.className = "table-wrap";
+    table.replaceWith(wrap);
+    wrap.appendChild(table);
+  });
+}
+
+function selectEl(name, options, value) {
+  return `<label>${name}<select data-field="${name}">` +
+    options.map((o) => `<option${o.value === value ? " selected" : ""} value="${esc(o.value)}">${esc(o.label)}</option>`).join("") +
+    "</select></label>";
+}
+
+async function showIssue(id) {
+  let issue;
+  try { issue = await api(`/api/issue/${id}`); }
+  catch (err) { toast(err.message, true); return; }
+
+  $("#dkind").textContent = issue.id;
+  $("#dplan").hidden = true;
+
+  const projectOptions = [{ value: "", label: "No project" }].concat(
+    STATE.data.projects.filter((p) => !p.orphan).map((p) => ({ value: p.slug, label: p.name })));
+
+  const stamps = [issue.created && `created ${issue.created.slice(0, 10)}`,
+                  issue.updated && `updated ${issue.updated.slice(0, 10)}`].filter(Boolean).join(" · ");
+
+  $("#dbody").innerHTML =
+    `<h1>${esc(issue.title)}</h1>` +
+    `<div class="controls">` +
+      selectEl("Status", STATE.data.statuses.map((s) => ({ value: s, label: s })), issue.status) +
+      selectEl("Priority", STATE.data.priorities.map((p) => ({ value: p, label: p })), issue.priority) +
+      selectEl("Project", projectOptions, issue.projectSlug || "") +
+    `</div>` +
+    (issue.kind || issue.labels.length || stamps
+      ? `<div class="meta" style="margin-top:12px">` + kindChip(issue.kind).trim() +
+        issue.labels.map((l) => `<span class="chip">${esc(l)}</span>`).join("") +
+        (stamps ? `<span class="hint" style="margin-left:4px">${esc(stamps)}</span>` : "") +
+        `</div>`
+      : "") +
+    `<div class="prose">${issue.html}</div>` +
+    `<div class="comment-box">` +
+      `<textarea id="ctext" placeholder="Add a comment — appended to the file as **${new Date().toISOString().slice(0, 10)}** — …"></textarea>` +
+      `<button class="primary" id="csave">Add comment</button>` +
+      `<div class="hint" style="margin-top:8px">${esc(issue.file || "")}</div>` +
+    `</div>`;
+
+  wrapTables($("#dbody"));
+
+  $("#dbody").querySelectorAll(".controls select").forEach((select) => {
+    select.addEventListener("change", async () => {
+      const field = select.dataset.field;
+      const body = { mtime: issue.mtime };
+      if (field === "Status") body.status = select.value;
+      if (field === "Priority") body.priority = select.value;
+      if (field === "Project") body.projectSlug = select.value;
+      try {
+        const updated = await api(`/api/issue/${issue.id}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        Object.assign(issue, updated);
+        const card = STATE.byId.get(issue.id);
+        if (card) { Object.assign(card, updated); renderBoard(); }
+        toast(`${issue.id} · ${field.toLowerCase()} saved`);
+      } catch (err) {
+        toast(err.message, true);
+        showIssue(issue.id);
+      }
+    });
+  });
+
+  $("#csave").addEventListener("click", async () => {
+    const text = $("#ctext").value.trim();
+    if (!text) return;
+    $("#csave").disabled = true;
+    try {
+      await api(`/api/issue/${issue.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ comment: text, mtime: issue.mtime }),
+      });
+      toast("Comment added");
+      showIssue(issue.id);
+    } catch (err) {
+      toast(err.message, true);
+      $("#csave").disabled = false;
+    }
+  });
+
+  openDrawer();
+  $("#dbody").scrollTop = 0;
+}
+
+async function showProject(slug) {
+  let project;
+  try { project = await api(`/api/project/${slug}`); }
+  catch (err) { toast(err.message, true); return; }
+
+  $("#dkind").textContent = "Project";
+  const plan = $("#dplan");
+  plan.hidden = !project.hasPlan;
+  if (project.hasPlan) plan.href = `/projects/${project.slug}.html`;
+
+  const rows = project.issues.map((i) =>
+    `<div class="irow" data-id="${i.id}"><span class="id">${i.id}</span>` +
+    `<span class="t">${esc(i.title)}</span><span class="st">${i.status}</span></div>`).join("");
+
+  $("#dbody").innerHTML =
+    `<h1>${esc(project.name)}</h1>` +
+    `<div class="hint">${esc(project.status)} · ${project.issues.length} issue${project.issues.length === 1 ? "" : "s"} · ${esc(project.file || "derived from issues")}</div>` +
+    `<div class="prose">${project.html}</div>` +
+    `<h2 style="font:600 15px/1.3 var(--sans);margin:28px 0 4px">Issues in this project</h2>` +
+    `<div class="hint" style="margin-bottom:10px">Derived from the issue files, not the project page.</div>` +
+    `<div class="ilist">${rows || '<p class="hint">None.</p>'}</div>`;
+
+  wrapTables($("#dbody"));
+  $("#dbody").querySelectorAll(".irow").forEach((row) =>
+    row.addEventListener("click", () => { location.hash = row.dataset.id; }));
+
+  openDrawer();
+  $("#dbody").scrollTop = 0;
+}
+
+async function showDoc(slug) {
+  let doc;
+  try { doc = await api(`/api/doc/${slug}`); }
+  catch (err) { toast(err.message, true); return; }
+  $("#dkind").textContent = "Document";
+  $("#dplan").hidden = true;
+  $("#dbody").innerHTML =
+    `<h1>${esc(doc.name)}</h1><div class="hint">${esc(doc.file)}</div>` +
+    `<div class="prose">${doc.html}</div>`;
+  wrapTables($("#dbody"));
+  openDrawer();
+  $("#dbody").scrollTop = 0;
+}
+
+/* ------------------------------------------------------------- routing */
+
+function setView(view) {
+  STATE.view = view;
+  for (const id of ["board", "projects", "docs"]) $("#" + id).hidden = id !== view;
+  document.querySelectorAll(".tabs button").forEach((b) =>
+    b.setAttribute("aria-selected", String(b.dataset.view === view)));
+  if (view === "projects") renderProjects();
+  if (view === "docs") renderDocs();
+}
+
+function route() {
+  const hash = location.hash.slice(1);
+  if (!hash || hash === "board") { closeDrawer(); setView("board"); return; }
+  if (hash === "projects" || hash === "docs") { closeDrawer(); setView(hash); return; }
+  if (hash.startsWith("project/")) return void showProject(hash.slice(8));
+  if (hash.startsWith("doc/")) return void showDoc(hash.slice(4));
+  if (/^[A-Z][A-Z0-9]*-\d+$/.test(hash)) return void showIssue(hash);
+  closeDrawer();
+}
+
+function esc(text) {
+  return String(text).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+}
+
+/* ------------------------------------------------------------- boot */
+
+function refilter() {
+  if (STATE.view === "board") renderBoard();
+  if (STATE.view === "projects") renderProjects();
+}
+
+async function boot() {
+  try { STATE.data = await api("/api/board"); }
+  catch (err) { document.body.innerHTML = `<p class="empty">Could not load the hub — ${esc(err.message)}</p>`; return; }
+
+  STATE.byId = new Map(STATE.data.issues.map((i) => [i.id, i]));
+  assignHues(STATE.data.projects);
+  $("#count").textContent = `${STATE.data.issues.length} issues · ${STATE.data.projects.length} projects`;
+
+  const labelCounts = {};
+  const kindCounts = {};
+  let unassigned = 0;
+  for (const issue of STATE.data.issues) {
+    if (!issue.projectSlug) unassigned++;
+    kindCounts[issue.kind || NO_KIND] = (kindCounts[issue.kind || NO_KIND] || 0) + 1;
+    for (const label of issue.labels) labelCounts[label] = (labelCounts[label] || 0) + 1;
+  }
+
+  PICKERS.project = makePicker($("#fproj"), {
+    allLabel: "All projects",
+    searchLabel: "Filter projects\u2026",
+    options: STATE.data.projects
+      .map((p) => ({ value: p.slug, label: p.name, count: p.total }))
+      .concat(unassigned ? [{ value: NO_PROJECT, label: "\u2014 no project \u2014", count: unassigned }] : []),
+    onChange: refilter,
+  });
+  const kindNames = STATE.data.kinds.concat(Object.keys(kindCounts).filter((k) => k !== NO_KIND && !STATE.data.kinds.includes(k)));
+  PICKERS.kind = makePicker($("#fkind"), {
+    allLabel: "All kinds",
+    searchLabel: "Filter kinds\u2026",
+    options: kindNames.filter((k) => kindCounts[k]).map((k) => ({ value: k, label: k, count: kindCounts[k] }))
+      .concat(kindCounts[NO_KIND] ? [{ value: NO_KIND, label: "\u2014 no kind \u2014", count: kindCounts[NO_KIND] }] : []),
+    onChange: refilter,
+  });
+  PICKERS.label = makePicker($("#flabel"), {
+    allLabel: "All labels",
+    searchLabel: "Filter labels\u2026",
+    options: STATE.data.labels.map((l) => ({ value: l, label: l, count: labelCounts[l] })),
+    onChange: refilter,
+  });
+
+  renderBoard();
+  route();
+}
+
+$("#q").addEventListener("input", refilter);
+$("#clear").addEventListener("click", () => {
+  $("#q").value = "";
+  PICKERS.kind?.clear();
+  PICKERS.project?.clear();
+  PICKERS.label?.clear();
+  refilter();
+});
+document.querySelectorAll(".tabs button").forEach((b) =>
+  b.addEventListener("click", () => { location.hash = b.dataset.view; }));
+$("#dclose").addEventListener("click", () => history.length > 1 ? history.back() : (location.hash = STATE.view));
+$("#scrim").addEventListener("click", () => $("#dclose").click());
+document.addEventListener("keydown", (ev) => {
+  if (ev.key === "Escape" && document.body.classList.contains("open")) $("#dclose").click();
+  if (ev.key === "/" && document.activeElement !== $("#q")) { ev.preventDefault(); $("#q").focus(); }
+});
+window.addEventListener("hashchange", route);
+boot();
+</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Offline Forecasts</title><style>:root{--bg:#f3f5f2;--surface:#fff;--ink:#1f2a24;--muted:#5d6b62;--line:#d9e0db;--accent:#2f6b4f;--soft:rgba(47,107,79,.1);--amber:#a86b00}
+@media (prefers-color-scheme:dark){:root{--bg:#121714;--surface:#1a211d;--ink:#e3eae5;--muted:#9eaba3;--line:#2c3631;--accent:#8fd0ae;--soft:rgba(143,208,174,.12);--amber:#f0b45a}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:44px 20px 80px;display:grid;gap:40px}
+h1{font:600 clamp(2rem,5vw,2.7rem)/1.1 Georgia,"New York",serif;margin:0}h2{font:600 1.45rem/1.2 Georgia,"New York",serif;margin:0 0 12px}
+.eyebrow{font-size:.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.lede{font-size:1.1rem;color:var(--muted);max-width:62ch;margin:10px 0 0}
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.pill{font-size:.78rem;font-weight:600;padding:3px 11px;border-radius:99px;background:var(--soft);color:var(--accent)}
+.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.step{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.step b{display:block;margin-bottom:4px}.step span{color:var(--muted);font-size:.92rem}
+.tasks{display:grid;gap:10px}.task{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 18px;display:grid;grid-template-columns:72px 1fr;gap:4px 14px}
+.task .id{font:600 .9rem ui-monospace,Menlo,monospace;color:var(--accent);padding-top:2px}.task h3{margin:0;font-size:1rem}.task p{margin:2px 0 0;color:var(--muted);font-size:.93rem}
+.task .st{font-size:.75rem;font-weight:600;color:var(--amber)}
+@media(max-width:640px){.flow{grid-template-columns:1fr}.task{grid-template-columns:1fr}}</style></head>
+<body><div class="wrap">
+<header><span class="eyebrow">Project · Pocket Weather 2.5</span><h1>Offline Forecasts</h1><p class="lede">The forecast you saw an hour ago is still there when the signal is gone, kept fresh in the background and honest about its age.</p><div class="pills"><span class="pill">In Progress</span><span class="pill">PW-1 to PW-8</span><span class="pill">Target 1 November</span></div></header>
+<section><h2>How it works</h2><div class="flow"><div class="step"><b>1. Keep it</b><span>The last full forecast per saved place, under 5 MB.</span></div><div class="step"><b>2. Refresh it</b><span>Every two hours in the background, written atomically.</span></div><div class="step"><b>3. Say its age</b><span>"Updated 2 hours ago", and "No connection" when offline.</span></div></div></section>
+<section><h2>Issues, in build order</h2><div class="tasks"><div class="task"><span class="id">PW-1</span><div><h3>Show the last forecast offline</h3><p>Shipped: yesterday's forecast in 0.3 s in airplane mode.</p><span class="st">Done</span></div></div><div class="task"><span class="id">PW-6</span><div><h3>Keep the cache under 5 MB per place</h3><p>20 places use 31 MB, down from 140 MB.</p><span class="st">Done</span></div></div><div class="task"><span class="id">PW-2</span><div><h3>Refresh in the background</h3><p>Two complete refreshes overnight on a device.</p><span class="st">In progress</span></div></div><div class="task"><span class="id">PW-3</span><div><h3>Say how old it is</h3><p>Reads as one phrase in VoiceOver.</p><span class="st">In review</span></div></div><div class="task"><span class="id">PW-7</span><div><h3>Offline on Apple Watch</h3><p>Waits for PW-2.</p><span class="st">Backlog</span></div></div></div></section>
+</div></body></html>

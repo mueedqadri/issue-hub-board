@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Issue hubs</title>
+<script>
+// Open the hub used last (or the only one); ?pick always shows the list.
+(() => {
+  let theme, last;
+  try { theme = localStorage.getItem('issue-hub-theme'); last = localStorage.getItem('issue-hub:last'); } catch {}
+  if (theme === 'dark' || theme === 'light') document.documentElement.dataset.theme = theme;
+  window.__pick = location.search.includes('pick');
+  window.__last = last;
+})();
+</script>
+<style>
+:root{--bg:#ecefec;--surface:#f8faf7;--ink:#29312c;--muted:#626e65;--faint:#8a958d;--line:#d5dcd6;--hover:#dfe6da;--accent:#476650;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#141816;--surface:#1a201d;--ink:#e2e9e2;--muted:#a4b0a7;--faint:#76827a;--line:#2f3833;--hover:#26302a;--accent:#a6c69c;color-scheme:dark}}
+:root[data-theme=dark]{--bg:#141816;--surface:#1a201d;--ink:#e2e9e2;--muted:#a4b0a7;--faint:#76827a;--line:#2f3833;--hover:#26302a;--accent:#a6c69c;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:grid;place-items:start center;padding:12vh 16px 32px}
+main{width:min(520px,100%)}
+h1{font-size:18px;margin:0 0 4px}
+p{margin:0 0 18px;color:var(--muted);font-size:13px}
+a.hub{display:flex;align-items:center;gap:12px;padding:12px 14px;margin-bottom:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;color:var(--ink);text-decoration:none}
+a.hub:hover,a.hub:focus-visible{background:var(--hover);outline:none;border-color:var(--faint)}
+.mark{width:28px;height:28px;border-radius:7px;background:var(--accent);color:var(--bg);display:grid;place-items:center;font-weight:700;flex-shrink:0}
+.name{font-weight:600}
+.meta{margin-left:auto;color:var(--faint);font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.empty{color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <h1>Issue hubs</h1>
+  <p>Pick a hub. The viewer remembers the last one you opened.</p>
+  <div id="list"><p class="empty">Loading…</p></div>
+</main>
+<script>
+(async () => {
+  const list = document.getElementById('list');
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  let hubs = [];
+  try { hubs = await (await fetch('hubs.json', { cache: 'no-cache' })).json(); } catch {}
+  if (!window.__pick) {
+    const target = hubs.length === 1 ? hubs[0].slug : hubs.some(h => h.slug === window.__last) ? window.__last : null;
+    if (target) { location.replace(`${encodeURIComponent(target)}/`); return; }
+  }
+  list.innerHTML = hubs.length
+    ? hubs.map(h => `<a class="hub" href="${encodeURIComponent(h.slug)}/"><span class="mark">${esc((h.name || '?').slice(0, 1).toUpperCase())}</span><span><span class="name">${esc(h.name)}</span>${h.prefix ? ` <span class="meta" style="margin:0">${esc(h.prefix)}-</span>` : ''}</span><span class="meta">${h.open} open · ${h.total} total</span></a>`).join('')
+    : '<p class="empty">No hubs exported yet.</p>';
+  list.querySelector('a')?.focus();
+})();
+</script>
+</body>
+</html>
