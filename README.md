@@ -11,25 +11,44 @@ stay the truth.
 
 ![The issue list with an issue open beside it](docs/screenshots/list.png)
 
-It is the viewer for [issue-hub](https://github.com/mueedqadri/issue-hub), a
-workflow for coding agents that keeps issues in git, but it works with any
-folder in [the hub format](docs/format.md).
+## Why it's different
 
-## Why
+**It runs on almost nothing.** The whole app is about 25 MB of RAM. On a
+home server it serves a real hub of 962 issues in 23 MiB, with CPU near
+zero. There's no database, no Node, no build step and no dependencies: just
+Python's standard library and plain HTML, CSS and JavaScript. Self-hosted
+trackers such as Plane ask for 4 GB or more. This fits next to everything
+else on a Raspberry Pi, a NAS or the smallest VPS.
 
-- **Instant.** Every issue is in memory, so search, filters and grouping
-  answer within a frame. The page draws from its last copy first, then checks
-  for a newer one; an unchanged hub costs a `304`.
-- **Files stay the truth.** Issues are markdown in a git repo you already
-  have. The board never writes to them, so agents and people keep editing
-  them however they like.
-- **Projects with their documents.** An issue's panel shows its project's
-  progress, its illustrated plan and documents, related issues in both
-  directions, and the issue's own pages and images, all opening in place.
-- **Several projects.** Point it at more than one hub and switch between
-  them; `/` opens the one you used last.
-- **Nothing to install but Python.** The standard library only, with plain
-  HTML, CSS and JavaScript. About 25 MB of RAM for a thousand issues.
+**It's made for working with coding agents.** Issues are markdown files in
+git, the format agents already read and write. Pair it with
+[issue-hub](https://github.com/mueedqadri/issue-hub), a skill for Claude
+Code and other agents, and the agents run the tracker while you watch it
+here:
+
+- Parallel agent sessions reserve issue numbers that never collide, file
+  issues from templates, move their status, and link commits to them.
+- Agents save their plans, mockups and findings next to the issue, and the
+  board shows each one in the issue's panel, opening in place.
+- Each hub keeps its own house rules, kinds and labels, which agents follow
+  and the board turns into filters and badges.
+- The board is read-only, so it never fights an agent over a file. Changes
+  show up the next time you look, or within two minutes on a server.
+
+Without issue-hub it still works with any folder in
+[the hub format](docs/format.md).
+
+**It's quick.** Every issue is in memory, so search, filters and grouping
+answer within a frame. The page draws from its last copy at once, then
+checks for a newer one; an unchanged hub costs a `304`.
+
+**Projects come with their documents.** An issue's panel shows its
+project's progress, illustrated plan and documents, related issues in both
+directions, and the issue's own pages and images. Point it at several hubs
+and switch between them; `/` opens the one you used last.
+
+**Your files stay the truth.** No import and no lock-in: the issues stay in
+a git repo you already have, readable and editable by hand.
 
 | | |
 | --- | --- |
